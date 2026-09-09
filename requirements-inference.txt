@@ -1,0 +1,58 @@
+# ===========================================================================
+#  REQUIRES CPython 3.10, 3.11 or 3.12  (3.11 recommended)
+#
+#  On a newer interpreter (3.13+) pip finds no wheels for numpy/scipy/torch/
+#  faiss, falls back to building them from source, and fails with a confusing
+#  error about a missing Fortran or C++ compiler. Installing a compiler does
+#  NOT fix it -- torch has no source build for those interpreters.
+#
+#  Check before installing:   python scripts/check_environment.py
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# PRODUCTION / INFERENCE dependencies.
+#
+# This is what the serving container installs. It is deliberately smaller than
+# requirements-training.txt: no plotting, no dataset tooling, no test runner.
+#
+# CPU-only PyTorch is strongly recommended for serving. The default PyPI wheel
+# for Linux bundles ~2.5 GB of CUDA libraries you do not need on a CPU box:
+#
+#   pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-inference.txt
+#
+# The Dockerfile does exactly that.
+# ---------------------------------------------------------------------------
+
+# --- core numerics -----------------------------------------------------------
+numpy==1.26.4
+scipy==1.14.1
+scikit-learn==1.5.2
+
+# --- model -------------------------------------------------------------------
+torch==2.5.1
+transformers==4.46.3
+tokenizers==0.20.3
+safetensors==0.4.5
+huggingface-hub==0.26.5
+
+# --- retrieval ---------------------------------------------------------------
+sentence-transformers==3.3.1
+faiss-cpu==1.9.0.post1
+
+# --- explainability ----------------------------------------------------------
+# LIME is the interactive default; SHAP powers audit mode. Both are optional at
+# runtime -- the service falls back to exact occlusion attribution and says so --
+# but they are installed here so the shipped image supports every method.
+lime==0.2.0.1
+shap==0.46.0
+nltk==3.9.1          # WordNet + SentiWordNet for the incongruity check
+
+# --- serving -----------------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+requests==2.32.3
+PyYAML==6.0.2

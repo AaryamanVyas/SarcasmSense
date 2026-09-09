@@ -1,0 +1,14 @@
+# ===========================================================================
+#  REQUIRES CPython 3.10, 3.11 or 3.12  (3.11 recommended)
+#
+#  On a newer interpreter (3.13+) pip finds no wheels for numpy/scipy/torch/
+#  faiss, falls back to building them from source, and fails with a confusing
+#  error about a missing Fortran or C++ compiler. Installing a compiler does
+#  NOT fix it -- torch has no source build for those interpreters.
+#
+#  Check before installing:   python scripts/check_environment.py
+# ===========================================================================
+
+# Convenience file: the full research + serving environment.
+# For a slim production image use requirements-inference.txt instead.
+-r requirements-training.txt

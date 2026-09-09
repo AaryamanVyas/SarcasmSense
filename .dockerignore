@@ -1,0 +1,52 @@
+# --- version control / editors ------------------------------------------------
+.git
+.gitignore
+.github
+.idea
+.vscode
+*.swp
+
+# --- python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- node ---------------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+
+# --- large research artefacts (bind-mounted at runtime instead) ---------------
+data/raw/
+data/processed/
+data/splits/
+knowledge/raw/
+knowledge/processed/
+knowledge/index/
+knowledge/index_sample/
+checkpoints/
+results/
+notebooks/
+*.faiss
+*.npy
+*.npz
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.csv.gz
+*.jsonl
+
+# --- docs / tests (not needed in the serving image) ---------------------------
+docs/
+tests/
+README.md
+LICENSE

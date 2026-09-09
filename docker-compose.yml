@@ -1,0 +1,72 @@
+# =============================================================================
+# Local / self-hosted deployment.
+#
+#   docker compose up --build
+#     frontend -> http://localhost:5173
+#     backend  -> http://localhost:8000  (docs at /docs)
+#
+# Before the first run you need a trained checkpoint and a knowledge index.
+# See the README section "Docker deployment". Both are bind-mounted read-only,
+# so no large artefact ever enters the image or the git history.
+# =============================================================================
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Baked into the frontend bundle inside the image (only relevant when
+        # SERVE_FRONTEND=true; the compose frontend below is built separately).
+        VITE_API_BASE_URL: /api
+    image: sarcasm-api:latest
+    container_name: sarcasm-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      MODEL_PATH: ${MODEL_PATH:-/app/checkpoints/full_model/best_model}
+      DEVICE: ${DEVICE:-}
+      RESULTS_DIR: /app/results
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      DEBUG: "false"
+      MAX_TEXT_LENGTH: ${MAX_TEXT_LENGTH:-2000}
+      SERVE_FRONTEND: ${SERVE_FRONTEND:-false}
+      NLTK_DATA: /app/knowledge/raw/nltk_data
+    volumes:
+      # Read-only: the API must never modify research artefacts.
+      - ./checkpoints:/app/checkpoints:ro
+      - ./knowledge:/app/knowledge:ro
+      - ./results:/app/results:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      # Generous: loading RoBERTa + a large FAISS index takes a while on CPU.
+      start_period: 180s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: ${BACKEND_MEMORY_LIMIT:-6g}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Requests go to /api on the frontend's own origin; nginx proxies them
+        # to the backend, so the browser never needs CORS.
+        VITE_API_BASE_URL: /api
+    image: sarcasm-frontend:latest
+    container_name: sarcasm-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_started

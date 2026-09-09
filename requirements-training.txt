@@ -1,0 +1,40 @@
+# ===========================================================================
+#  REQUIRES CPython 3.10, 3.11 or 3.12  (3.11 recommended)
+#
+#  On a newer interpreter (3.13+) pip finds no wheels for numpy/scipy/torch/
+#  faiss, falls back to building them from source, and fails with a confusing
+#  error about a missing Fortran or C++ compiler. Installing a compiler does
+#  NOT fix it -- torch has no source build for those interpreters.
+#
+#  Check before installing:   python scripts/check_environment.py
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# RESEARCH / TRAINING dependencies.
+#
+# Everything needed to acquire data, build the knowledge index, train, evaluate,
+# run ablations, plot results and run the test-suite.
+#
+#   pip install -r requirements-training.txt
+#
+# On a CUDA machine install PyTorch first from the matching index, e.g.
+#   pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+# ---------------------------------------------------------------------------
+
+-r requirements-inference.txt
+
+# --- training ----------------------------------------------------------------
+accelerate==1.1.1
+tqdm==4.67.1
+
+# --- data --------------------------------------------------------------------
+pandas==2.2.3
+
+# --- reporting ---------------------------------------------------------------
+matplotlib==3.9.3
+seaborn==0.13.2
+
+# --- testing -----------------------------------------------------------------
+pytest==8.3.4
+pytest-cov==6.0.0
+httpx==0.28.1

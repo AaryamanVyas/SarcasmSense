@@ -1,0 +1,103 @@
+# --- python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+
+# --- testing / typing ---------------------------------------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# --- environment --------------------------------------------------------------
+.env
+.env.local
+*.env
+!.env.example
+
+# --- node ---------------------------------------------------------------------
+node_modules/
+frontend/dist/
+npm-debug.log*
+yarn-error.log*
+.vite/
+
+# =============================================================================
+# Research artefacts. These are large, machine-generated and reproducible from
+# the scripts, so they must not enter git history.
+# =============================================================================
+
+# --- datasets (see scripts/download_datasets.py) ------------------------------
+data/raw/**
+!data/raw/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+data/splits/**
+!data/splits/.gitkeep
+!data/sample/**
+
+# --- knowledge base & FAISS index --------------------------------------------
+knowledge/raw/**
+!knowledge/raw/.gitkeep
+knowledge/processed/**
+!knowledge/processed/.gitkeep
+knowledge/index/**
+!knowledge/index/.gitkeep
+knowledge/index_sample/**
+!knowledge/index_sample/.gitkeep
+
+# --- model checkpoints --------------------------------------------------------
+checkpoints/**
+!checkpoints/.gitkeep
+
+# --- results ------------------------------------------------------------------
+results/**
+!results/.gitkeep
+!results/figures/.gitkeep
+
+# --- large binaries anywhere --------------------------------------------------
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.faiss
+*.npy
+*.npz
+*.csv.gz
+*.bz2
+*.zip
+*.tar.gz
+
+# --- caches -------------------------------------------------------------------
+.cache/
+nltk_data/
+*.log
+
+# --- OS / editors -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- notebooks ----------------------------------------------------------------
+.ipynb_checkpoints/
+
+# Single-container frontend bundle (created by the Dockerfile / a manual copy)
+frontend_dist/

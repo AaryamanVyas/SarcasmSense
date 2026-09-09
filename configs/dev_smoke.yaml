@@ -1,0 +1,83 @@
+# =============================================================================
+# DEVELOPMENT / SMOKE-TEST CONFIGURATION -- NOT A RESEARCH CONFIGURATION
+# =============================================================================
+# Uses the tiny randomly-initialised encoder produced by
+#   python scripts/make_dev_assets.py
+# and the sample knowledge index produced by
+#   python scripts/build_knowledge_index.py --sample
+#
+# Its purpose is to exercise every code path (tokenisation, cross-attention
+# fusion, training loop, checkpointing, explanation, API) in seconds on a CPU.
+# Metrics produced with this config describe the plumbing, NOT the proposed
+# architecture. They must never be reported as results.
+# =============================================================================
+experiment:
+  name: dev_smoke
+  seed: 42
+  output_dir: checkpoints/dev_smoke
+  results_dir: results/dev
+  deterministic: true
+  notes: >-
+    DEVELOPMENT/TEST ONLY. Tiny encoder + sample index. Not a research run.
+
+model:
+  encoder_name: checkpoints/dev_encoder
+  max_utterance_length: 64
+  max_context_length: 64
+  use_context: true
+  use_knowledge: true
+  fusion: cross_attention
+  shared_encoder: true
+  num_attention_heads: 8
+  fusion_layers: 1
+  fusion_dropout: 0.1
+  knowledge_projection: true
+  classifier_hidden: 128
+  classifier_dropout: 0.2
+  freeze_encoder_layers: 0
+  pooling: cls
+
+data:
+  processed_path: data/processed/dataset.jsonl
+  splits_dir: data/splits
+  datasets: []
+  max_context_turns: 3
+  max_train_samples: 1200
+  max_eval_samples: 400
+  num_workers: 0
+
+retrieval:
+  enabled: true
+  index_dir: knowledge/index_sample
+  top_k: 5
+  encoder_backend: auto
+  encoder_name: sentence-transformers/all-MiniLM-L6-v2
+  query_mode: utterance_plus_context
+  min_score: 0.0
+  cache_size: 2048
+  batch_size: 64
+
+training:
+  epochs: 2
+  batch_size: 16
+  eval_batch_size: 32
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-5
+  head_learning_rate: 1.0e-3
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  max_grad_norm: 1.0
+  mixed_precision: "off"   # YAML would read a bare `off` as boolean false
+  early_stopping_patience: 2
+  class_weights: balanced
+  metric_for_best: macro_f1
+  log_every: 25
+  save_every_epoch: false
+  resume_from: null
+
+explain:
+  default_method: lime
+  lime_num_samples: 100
+  lime_num_features: 10
+  shap_num_samples: 32
+  max_tokens_reported: 10

@@ -1,0 +1,67 @@
+# PROPOSED MODEL -- RoBERTa + context + retrieved commonsense + cross-attention fusion.
+# This is the configuration the project's contribution is about.
+experiment:
+  name: full_model
+  seed: 42
+  output_dir: checkpoints/full_model
+  results_dir: results
+  deterministic: true
+  notes: >-
+    Proposed model: context and top-5 commonsense evidence fused into the utterance representation by trainable cross-attention.
+model:
+  encoder_name: roberta-base
+  max_utterance_length: 128
+  max_context_length: 128
+  use_context: true
+  use_knowledge: true
+  fusion: cross_attention
+  shared_encoder: true
+  num_attention_heads: 8
+  fusion_layers: 1
+  fusion_dropout: 0.1
+  knowledge_projection: true
+  classifier_hidden: 256
+  classifier_dropout: 0.2
+  freeze_encoder_layers: 0
+  pooling: cls
+data:
+  processed_path: data/processed/dataset.jsonl
+  splits_dir: data/splits
+  datasets: []            # [] = use every corpus present in the processed file
+  max_context_turns: 3
+  max_train_samples: null
+  max_eval_samples: null
+  num_workers: 2
+retrieval:
+  enabled: true
+  index_dir: knowledge/index
+  top_k: 5
+  encoder_backend: auto
+  encoder_name: sentence-transformers/all-MiniLM-L6-v2
+  query_mode: utterance_plus_context
+  min_score: 0.0
+  cache_size: 2048
+  batch_size: 64
+training:
+  epochs: 4
+  batch_size: 16          # fits a 16 GB T4 at max_length 128 with fp16
+  eval_batch_size: 32
+  gradient_accumulation_steps: 2   # effective batch 32
+  learning_rate: 2.0e-5   # encoder LR (standard RoBERTa fine-tuning value)
+  head_learning_rate: 1.0e-4       # freshly-initialised fusion + head
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  max_grad_norm: 1.0
+  mixed_precision: auto   # bf16/fp16 on CUDA, disabled on CPU
+  early_stopping_patience: 2
+  class_weights: balanced
+  metric_for_best: macro_f1
+  log_every: 50
+  save_every_epoch: false
+  resume_from: null
+explain:
+  default_method: lime
+  lime_num_samples: 200
+  lime_num_features: 10
+  shap_num_samples: 64
+  max_tokens_reported: 12
