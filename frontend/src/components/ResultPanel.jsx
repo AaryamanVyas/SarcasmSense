@@ -10,23 +10,51 @@ function tokenStyle(weight) {
     : { background: `rgba(43, 108, 176, ${alpha.toFixed(3)})` };
 }
 
-/** Render the utterance with per-token attribution highlighting. */
-function HighlightedText({ text, importance, method }) {
-  const weights = new Map();
+/** Render the utterance with per-token attribution highlighting.
+ *
+ * Token weights come from the backend keyed by token position (the index into
+ * its ``\\S+`` tokenisation of ``analysed_text``). We tokenise the same way on
+ * the frontend so attributions land on the exact word they were computed for,
+ * instead of collapsing equal spellings onto one weight or drifting out of
+ * alignment with a naive whitespace split.
+ */
+export function HighlightedText({ text, importance, method }) {
+  // Position -> weight, keeping the strongest attribution when a position
+  // recurs. Mirrors the backend's per-position TokenAttribution.position.
+  const weightsByPosition = new Map();
   importance.forEach((item) => {
-    const key = item.token;
-    if (!weights.has(key) || Math.abs(item.weight) > Math.abs(weights.get(key))) {
-      weights.set(key, item.weight);
+    const position = item.position;
+    if (position != null && position >= 0) {
+      const existing = weightsByPosition.get(position);
+      if (
+        existing === undefined ||
+        Math.abs(item.weight) > Math.abs(existing)
+      ) {
+        weightsByPosition.set(position, item.weight);
+      }
     }
   });
-  const words = text.split(/(\s+)/);
+
+  // Tokenise identically to the backend: \\S+ sequences. Empty fragments from
+  // split are dropped so wordIndex matches the backend position index.
+  const segments = [];
+  let wordIndex = 0;
+  for (const part of text.split(/(\s+)/)) {
+    if (part === '') continue;
+    if (/^\s+$/.test(part)) {
+      segments.push({ type: 'space', value: part });
+    } else {
+      segments.push({ type: 'word', value: part, wordIndex });
+      wordIndex += 1;
+    }
+  }
 
   return (
     <>
       <p className="tokens">
-        {words.map((word, index) => {
-          if (/^\s+$/.test(word)) return <span key={index}>{word}</span>;
-          const weight = weights.get(word) ?? 0;
+        {segments.map((segment, index) => {
+          if (segment.type === 'space') return <span key={index}>{segment.value}</span>;
+          const weight = weightsByPosition.get(segment.wordIndex) ?? 0;
           const supports = weight > 0.04;
           const opposes = weight < -0.04;
           return (
@@ -42,7 +70,7 @@ function HighlightedText({ text, importance, method }) {
                   : 'no measurable influence'
               }
             >
-              {word}
+              {segment.value}
             </span>
           );
         })}

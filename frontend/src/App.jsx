@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, api, BASE_URL } from './api';
 import { Banner } from './components/common';
 import DashboardPanel from './components/DashboardPanel';
@@ -25,6 +25,35 @@ const EMPTY_CONTEXT = ['', '', ''];
  */
 export default function App() {
   const [tab, setTab] = useState('analyse');
+  const [focusedTabIndex, setFocusedTabIndex] = useState(0);
+  const tabRefs = useRef([]);
+
+  const activateTab = (id, index) => {
+    setTab(id);
+    setFocusedTabIndex(index);
+  };
+
+  const handleTabKeyDown = (event, index) => {
+    const lastIndex = TABS.length - 1;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveFocus(index === lastIndex ? 0 : index + 1);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveFocus(index === 0 ? lastIndex : index - 1);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      moveFocus(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      moveFocus(lastIndex);
+    }
+  };
+
+  const moveFocus = (next) => {
+    setFocusedTabIndex(next);
+    tabRefs.current[next]?.focus();
+  };
 
   const [health, setHealth] = useState(null);
   const [healthError, setHealthError] = useState(null);
@@ -177,18 +206,27 @@ export default function App() {
             result. Text only.
           </p>
           <nav className="tabs" role="tablist" aria-label="Sections">
-            {TABS.map((entry) => (
-              <button
-                key={entry.id}
-                role="tab"
-                type="button"
-                className="tab"
-                aria-selected={tab === entry.id}
-                onClick={() => setTab(entry.id)}
-              >
-                {entry.label}
-              </button>
-            ))}
+            {TABS.map((entry, index) => {
+              const isSelected = tab === entry.id;
+              const isFocused = focusedTabIndex === index;
+              return (
+                <button
+                  key={entry.id}
+                  id={`tab-${entry.id}`}
+                  role="tab"
+                  type="button"
+                  className={`tab${isSelected ? ' tab--selected' : ''}`}
+                  aria-selected={isSelected}
+                  aria-controls={`tabpanel-${entry.id}`}
+                  tabIndex={isFocused ? 0 : -1}
+                  onClick={() => activateTab(entry.id, index)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  ref={(el) => (tabRefs.current[index] = el)}
+                >
+                  {entry.label}
+                </button>
+              );
+            })}
           </nav>
         </div>
       </header>
@@ -219,8 +257,9 @@ export default function App() {
         )}
 
         {tab === 'analyse' && (
-          <div className="grid">
-            <InputPanel
+          <section id="tabpanel-analyse" role="tabpanel" aria-labelledby="tab-analyse">
+            <div className="grid">
+              <InputPanel
               text={text}
               setText={setText}
               context={context}
@@ -244,23 +283,28 @@ export default function App() {
               />
             </div>
           </div>
+          </section>
         )}
 
         {tab === 'model' && (
-          <ModelInfoPanel
+          <section id="tabpanel-model" role="tabpanel" aria-labelledby="tab-model">
+            <ModelInfoPanel
             info={modelInfo}
             loading={modelInfoLoading}
             error={modelInfoError}
           />
+          </section>
         )}
 
         {tab === 'dashboard' && (
-          <DashboardPanel
+          <section id="tabpanel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+            <DashboardPanel
             results={results}
             loading={resultsLoading}
             error={resultsError}
             onRefresh={loadResults}
           />
+          </section>
         )}
       </main>
 
